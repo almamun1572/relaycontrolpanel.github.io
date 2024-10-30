@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Relay Control Panel with Countdown Timer</title>
+    <style>
+        /* Page and Container Styles */
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #1abc9c, #2c3e50);
+            color: #f8f9fa;
+            padding: 2px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .container {
+            max-width: 900px;
+            padding-top: 3400px;
+            padding-left: 20px;
+            padding-right: 20px;
+            background: #34495e;
+            border-radius: 12px;
+            box-shadow: 0px 10px 30px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            margin: 2px;
+        }
+        .title {
+          color: #e74c3c; /* সুন্দর লাল রঙ */
+          font-size: 1.40em; /* বড় ফন্ট সাইজ */
+          margin-bottom: 20px;
+          text-align: center; /* টাইটেলটি পেজের মাঝখানে রাখার জন্য */
+          font-weight: bold;
+          background: linear-gradient(90deg, #e74c3c, #f39c12); /* গ্র্যাডিয়েন্ট ব্যাকগ্রাউন্ড */
+          -webkit-background-clip: text;
+          color: transparent;
+          padding: 10px;
+          text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.3); /* হালকা শেডো */
+         font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+         border-radius: 8px;
+       }
+        .relay {
+            margin: 20px 0;
+            padding: 20px;
+            padding-left: 50px;
+            padding-right: 50px;
+            background: #2c3e50;
+            border-radius: 10px;
+            box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Button Styles */
+        button, .set-btn, .timer-btn {
+            padding: 10px 15px;
+            border: none;
+            width: 150px;
+            height: 50px
+            color: #f8f9fa;
+            font-size: 1.40em;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: transform 0.3s, background-color 0.3s;
+        }
+        .on { background: #27ae60; }
+        .off { background: #e74c3c; }
+        button:hover { transform: scale(1.05); }
+
+        /* Timer and Alarm Section Styles */
+        .alarm {
+            margin-top: 15px;
+            font-size: 0.95em;
+        }
+
+       /* Countdown Timer Input Styling */
+        input[type="number"][id^="timerMinutes"] {
+            padding: 8px;
+            margin: 5px;
+            font-size: 1.2em;
+            border-radius: 8px;
+            border: 2px solid #4a6072; /* Border color */
+            background: #2c3e50; /* Background color */
+            color: #f8f9fa; /* Text color */
+            text-align: center;
+            width: 100px;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+            transition: background-color 0.3s, box-shadow 0.3s;
+        }
+
+        input[type="number"][id^="timerMinutes"]:focus {
+            background: #4a6072; /* Focus background color */
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.3);
+            outline: none; /* Remove outline */
+        }
+        .alarm input, .select-action, .select-time {
+            padding: 6px;
+            margin: 3px;
+            font-size: 1.40em;
+            border-radius: 10px;
+            border: none;
+            background: #4a6072;
+            color: #ecf0f1;
+            width: 60px;
+        }
+
+       /* Custom Styles for AM/PM and ON/OFF Select Options */
+       .alarm select {
+       padding: 6px;
+       margin: 3px;
+       font-size: 1.0em;
+       border-radius: 10px;
+       border: none;
+       background: #4a6072;
+       color: #ecf0f1;
+       width: 70px;
+       text-align: center;
+       transition: transform 0.3s;
+       }
+
+       .alarm select:hover {
+       background: #5a7182;
+       transform: scale(1.05);
+      }
+
+        .set-btn, .reset-btn, .timer-btn {
+            background: #f39c12;
+            transition: transform 0.3s;
+        }
+        .reset-btn {
+            background: #e74c3c;
+        }
+        .set-btn:hover, .reset-btn:hover, .timer-btn:hover { transform: scale(1.1); }
+
+        /* Countdown and Alarm Status Styles */
+        #countdown, .alarmStatus {
+            font-size: 0.85em;
+            color: #f1c40f;
+            font-weight: bold;
+            margin-top: 8px;
+        }
+
+        #clock {
+            font-size: 3em; /* বড় আকারের জন্য */
+            font-weight: bold;
+            color: #2ecc71; /* আকর্ষণীয় সবুজ রঙ */
+            background-color: #34495e; /* ক্লকের ব্যাকগ্রাউন্ড কালার */
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4); /* ক্লকের জন্য শেডো */
+            text-align: center;
+            width: fit-content;
+            margin: auto;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="title">Relay Control Panel With Countdown Timer And Alarm</h1>
+        <div id="clock"></div> <!-- HTML অংশটি লাইভ ক্লক প্রদর্শনের জন্য -->
+        <div id="relay-container"></div>
+    </div>
+
+    <script>
+        const databaseURL = "https://mamun-4relay-off-default-rtdb.firebaseio.com";
+        const firebaseSecret = "qRvvjyq1hWfswNHqIzGG2x1iwou6h4iYzYtwdGfH";
+
+        // Store intervals for alarms and timers
+        let alarmIntervals = Array.from({length: 4}, () => Array(10).fill(null));
+        let timerIntervals = Array(4).fill(null);
+
+        function setupRelayControls() {
+            const relayContainer = document.getElementById("relay-container");
+            for (let i = 1; i <= 4; i++) {
+                const relayDiv = document.createElement("div");
+                relayDiv.className = "relay";
+                relayDiv.innerHTML = `
+                    <h2>Relay ${i}</h2>
+                    <button id="relay${i}" class="off" onclick="toggleRelay(${i})">OFF</button>
+                    
+                    <!-- Alarm Setup -->
+                    <div class="alarm">
+                        <h3>Set Multiple Alarms</h3>
+                        ${Array.from({length: 10}, (_, j) => `
+                            <div id="alarmSection${i}-${j}" class="alarmSection">
+                                <input type="number" id="alarmHour${i}-${j}" placeholder="Hr" min="1" max="12">
+                                <input type="number" id="alarmMinute${i}-${j}" placeholder="Min" min="0" max="59">
+                                <select id="alarmAmPm${i}-${j}" class="select-option">
+                                <option value="AM">AM</option>
+                                    <option value="PM">PM</option>
+                                </select>
+                                    <select id="alarmAction${i}-${j}" class="select-option">
+                                    <option value="on">ON</option>
+                                    <option value="off">OFF</option>
+                                </select>
+                                <button onclick="setAlarm(${i}, ${j})" class="set-btn">Set</button>
+                                <button onclick="resetAlarm(${i}, ${j})" class="reset-btn">Reset</button>
+                                <p id="alarmStatus${i}-${j}" class="alarmStatus"></p>
+                            </div>
+                        `).join('')}
+                    </div>
+                    
+    <!-- Timer Setup -->
+    <div class="timer">
+    <h3>Countdown Timer</h3>
+    <label for="timerMinutes${i}">Minutes:</label>
+    <input type="number" id="timerMinutes${i}" min="0" max="60" placeholder="0">
+    <button onclick="startTimer(${i})" class="timer-btn">Start Timer</button>
+    <button onclick="stopTimer(${i})" class="reset-btn">Stop Timer</button>
+    <p id="timerStatus${i}" class="alarmStatus"></p>
+</div>`;
+                relayContainer.appendChild(relayDiv);
+            }
+        }
+
+        function toggleRelay(relayNumber) {
+            const relayRef = `Device${relayNumber}.json?auth=${firebaseSecret}`;
+            fetch(`${databaseURL}/${relayRef}`)
+                .then(response => response.json())
+                .then(data => {
+                    const newState = data === "0" ? "1" : "0";
+                    updateRelayState(relayNumber, newState);
+                });
+        }
+
+        function updateRelayState(relayNumber, newState) {
+            const relayRef = `Device${relayNumber}.json?auth=${firebaseSecret}`;
+            fetch(`${databaseURL}/${relayRef}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(newState)
+            })
+            .then(() => {
+                const relayButton = document.getElementById(`relay${relayNumber}`);
+                relayButton.textContent = newState === "1" ? "ON" : "OFF";
+                relayButton.className = newState === "1" ? "on" : "off";
+            })
+            .catch(error => console.error("Error updating Firebase:", error));
+        }
+
+        function setAlarm(relayNumber, alarmIndex) {
+            const hour = parseInt(document.getElementById(`alarmHour${relayNumber}-${alarmIndex}`).value);
+            const minute = parseInt(document.getElementById(`alarmMinute${relayNumber}-${alarmIndex}`).value);
+            const amPm = document.getElementById(`alarmAmPm${relayNumber}-${alarmIndex}`).value;
+            const action = document.getElementById(`alarmAction${relayNumber}-${alarmIndex}`).value;
+
+            if (isNaN(hour) || isNaN(minute)) {
+                alert("Please enter a valid time.");
+                return;
+            }
+
+            const alarmHour = amPm === "PM" ? hour % 12 + 12 : hour % 12;
+            const alarmTime = { hour: alarmHour, minute: minute };
+            checkAlarmTime(relayNumber, alarmIndex, alarmTime, action);
+        }
+
+        function checkAlarmTime(relayNumber, alarmIndex, alarmTime, action) {
+            const alarmStatusElem = document.getElementById(`alarmStatus${relayNumber}-${alarmIndex}`);
+            alarmStatusElem.textContent = "Alarm set";
+
+            clearInterval(alarmIntervals[relayNumber - 1][alarmIndex]); // Clear any existing interval
+            alarmIntervals[relayNumber - 1][alarmIndex] = setInterval(() => {
+                const now = new Date();
+                const currentHour = now.getHours();
+                const currentMinute = now.getMinutes();
+
+                if (currentHour === alarmTime.hour && currentMinute === alarmTime.minute) {
+                    clearInterval(alarmIntervals[relayNumber - 1][alarmIndex]);
+                    updateRelayState(relayNumber, action === "on" ? "1" : "0");
+                    alarmStatusElem.textContent = `Alarm triggered: Relay ${relayNumber} turned ${action.toUpperCase()}`;
+                }
+            }, 1000);
+        }
+
+        function resetAlarm(relayNumber, alarmIndex) {
+            clearInterval(alarmIntervals[relayNumber - 1][alarmIndex]);
+            document.getElementById(`alarmStatus${relayNumber}-${alarmIndex}`).textContent = "Alarm reset";
+        }
+
+        function startTimer(relayNumber) {
+    const minutes = parseInt(document.getElementById(`timerMinutes${relayNumber}`).value);
+    const timerStatusElem = document.getElementById(`timerStatus${relayNumber}`);
+
+    if (isNaN(minutes) || minutes <= 0) {
+        alert("Please enter a valid number of minutes.");
+        return;
+    }
+
+    clearInterval(timerIntervals[relayNumber - 1]);
+    const endTime = new Date().getTime() + minutes * 60000;
+    
+    timerIntervals[relayNumber - 1] = setInterval(() => {
+        const remainingTime = endTime - new Date().getTime();
+        if (remainingTime <= 0) {
+            clearInterval(timerIntervals[relayNumber - 1]);
+            updateRelayState(relayNumber, "0");
+            timerStatusElem.textContent = "Timer ended: Relay turned OFF";
+        } else {
+            const remainingMinutes = Math.floor(remainingTime / 60000);
+            const remainingSeconds = Math.floor((remainingTime % 60000) / 1000);
+            timerStatusElem.textContent = `Time remaining: ${remainingMinutes}m ${remainingSeconds}s`;
+        }
+    }, 1000);
+}
+
+        function stopTimer(relayNumber) {
+            clearInterval(timerIntervals[relayNumber - 1]);
+            document.getElementById(`timerStatus${relayNumber}`).textContent = "Timer stopped";
+        }
+
+        // Initialize the relay control panel
+        setupRelayControls();
+
+function updateClock() {
+    const now = new Date();
+    let hours = now.getHours();
+    const minutes = now.getMinutes();
+    const seconds = now.getSeconds();
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+
+    hours = hours % 12;
+    hours = hours ? hours : 12;
+
+    const formattedTime = 
+      `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')} ${ampm}`;
+    
+    document.getElementById("clock").textContent = formattedTime;
+  }
+
+  setInterval(updateClock, 1000);
+  updateClock();
+    </script>
+</body>
+</html>
